@@ -280,12 +280,11 @@ smtHandleEvent(
     smt_eventId_t       event,
     void*           context)
 {
-    smt_state_ptr_const_t   srcState = smtMachineGetActiveState(machine);
-    smt_machineStatus_t retVal = SMT_MACHINE_OK;
-    smt_trigger_t   *triggerTable = machine->triggerTable;
-    smt_trigger_t   *trigger = NULL;
+    smt_state_ptr_const_t srcState      = smtMachineGetActiveState(machine);
+    smt_machineStatus_t   retVal        = SMT_MACHINE_OK;
+    smt_trigger_t         *triggerTable = machine->triggerTable;
+    smt_trigger_t         *trigger      = NULL;
     int i;
-
 
     /* check current state, make sure we are not working on pseudo final state */
     if (smtIsStateFinal(srcState))
