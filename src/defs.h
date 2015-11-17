@@ -8,15 +8,15 @@ typedef char boolean;
 typedef UINT8 appId_t;
 
 #ifndef NULL
-#define NULL	((void*)0)
+#define NULL    ((void*)0)
 #endif
 
 #ifndef TRUE
-#define TRUE	((boolean)1)
+#define TRUE    ((boolean)1)
 #endif
 
 #ifndef FALSE
-#define FALSE	((boolean)0)
+#define FALSE   ((boolean)0)
 #endif
 
 #ifndef FOREVER

@@ -2,7 +2,7 @@
 #define SMT_USER_DEFS_H
 
 /*
- * this interface should be implemented by user in order to 
+ * this interface should be implemented by user in order to
  * allocate buffers for SMT
  */
 void* smt_get_buffer(unsigned int size);
