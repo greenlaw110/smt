@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 7.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smt", "smt\smt.vcproj", "{9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smt_demo", "smt_demo\smt_demo.vcproj", "{CA8E398F-0497-4F71-BA42-8DCD6056521E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "smt_hl", "smt_hl\smt_hl.vcproj", "{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}"
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		ConfigName.0 = Debug
+		ConfigName.1 = Release
+	EndGlobalSection
+	GlobalSection(ProjectDependencies) = postSolution
+		{CA8E398F-0497-4F71-BA42-8DCD6056521E}.0 = {9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}
+		{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}.0 = {9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}.Debug.ActiveCfg = Debug|Win32
+		{9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}.Debug.Build.0 = Debug|Win32
+		{9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}.Release.ActiveCfg = Release|Win32
+		{9FA977B3-3A3D-45EC-BDA0-01B57DF28B67}.Release.Build.0 = Release|Win32
+		{CA8E398F-0497-4F71-BA42-8DCD6056521E}.Debug.ActiveCfg = Debug|Win32
+		{CA8E398F-0497-4F71-BA42-8DCD6056521E}.Debug.Build.0 = Debug|Win32
+		{CA8E398F-0497-4F71-BA42-8DCD6056521E}.Release.ActiveCfg = Release|Win32
+		{CA8E398F-0497-4F71-BA42-8DCD6056521E}.Release.Build.0 = Release|Win32
+		{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}.Debug.ActiveCfg = Debug|Win32
+		{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}.Debug.Build.0 = Debug|Win32
+		{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}.Release.ActiveCfg = Release|Win32
+		{8CDF750C-18E8-4B2D-93A5-AD7B57266D04}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
