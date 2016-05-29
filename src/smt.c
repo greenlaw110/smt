@@ -19,6 +19,7 @@ typedef struct smt_stateMachine_data {
     smt_state_ptr_const_t activeState;
     smt_state_ptr_const_t historyState;
     smt_transition_ptr_const_t* entryTransitions;
+    smt_counter_t maxEventId;
 } smt_stateMachine_data_t;
 
 typedef smt_stateMachine_data_t* const smt_stateMachine_data_const_ptr_t;
@@ -240,7 +241,7 @@ static smt_machineStatus_t smt_handleEvent(smt_stateMachine_ptr_t machine,
     }
 
     /* prevent buffer overflow attack */
-    if (state->id * event >= data->transitionLookupSize) {
+    if (event > data->maxEventId) {
         return SMT_MACHINE_ERROR_UNKNOWN;
     }
 
@@ -343,6 +344,7 @@ static smt_machineStatus_t smt_buildStateMachine(
     data->activeState = NULL;
     data->historyState = NULL;
     data->entryTransitions = entryTransitions;
+    data->maxEventId = maxEventId;
     machine->internalData = data;
     return SMT_MACHINE_OK;
 }
