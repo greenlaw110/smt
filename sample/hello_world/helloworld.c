@@ -52,10 +52,13 @@ int main()
         printf("\nhelloworld>");
         scanf("%d", &input);
         getchar();
-        smtMachineRun(&helloworldStateMachine, input, NULL);
+        smt_machineStatus_t retVal = smtMachineRun(&helloworldStateMachine, input, NULL);
         if (smtIsMachineFinalized(&helloworldStateMachine)) {
             printf("world shutdown\n");
             break;
+        }
+        if (SMT_MACHINE_ERROR_UNKNOWN == retVal) {
+            printf("unknown event\n");
         }
     }
 
