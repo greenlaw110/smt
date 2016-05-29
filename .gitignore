@@ -1,1 +1,9 @@
 build
+.codelite
+.cproject
+.project
+.settings
+Debug
+smt.tags
+smt.workspace
+smt.workspace.session
