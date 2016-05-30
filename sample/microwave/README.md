@@ -15,7 +15,7 @@ We are using [cmake](https://cmake.org) to implement the build system
 
 ### Build statemachine app
 
-**Presumption** this assumes you have already built your SMT library. See [here](../../READEME.md) to get how to build the SMT library. Note you do **NOT** need to `make install` the `libsmt.so` to build and run this demo app.
+**Presumption** this assumes you have already built your SMT library. See [here](../../README.md) to get how to build the SMT library. Note you do **NOT** need to `make install` the `libsmt.so` to build and run this demo app.
 
 Below is the steps to build statemachine app:
 
