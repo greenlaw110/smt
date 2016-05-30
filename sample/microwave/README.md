@@ -11,13 +11,16 @@ The application is composed with two parts:
 * The statemachine app
 * The main app use the statemachine app
 
-We are using [cmake](https://cmake.org) to implement the build system
+We are using [cmake](https://cmake.org) to implement the build system.
+
+### Presumption
+
+It assumes you have already built your SMT library. 
+
+See [here](../../README.md) to get how to build the SMT library. Note you do **NOT** need to `make install` the `libsmt.so` to build and run this demo app.
+
 
 ### Build statemachine app
-
-**Presumption** this assumes you have already built your SMT library. See [here](../../README.md) to get how to build the SMT library. Note you do **NOT** need to `make install` the `libsmt.so` to build and run this demo app.
-
-Below is the steps to build statemachine app:
 
 ```bash
 cd smt/sample/microwave/statemachine
