@@ -339,7 +339,7 @@ static smt_machineStatus_t smt_buildStateMachine(
     }
     smt_stateMachine_data_t* data = smt_get_buffer(sizeof(smt_stateMachine_data_t));
     data->transitionLookup = transitionLookup;
-    data->transitionLookupSize = (maxEventId + 1) * (maxStateId + 1);
+    data->transitionLookupSize = (0 == machine->transitionCount) ? 0 : (maxEventId + 1) * (maxStateId + 1);
     data->entryState = entryState;
     data->activeState = NULL;
     data->historyState = NULL;
