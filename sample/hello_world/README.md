@@ -116,7 +116,7 @@ static smt_transition_t transitionList[] = {
 
 Define the statemachine:
 
-```c
+```
 smt_stateMachine_t helloworldStateMachine = {
     stateList, /* state list */
     1, /* state list size */
@@ -139,7 +139,7 @@ void help() {
 
 Implement the main method:
 
-```c
+```
 int main()
 {
     char input[10];
