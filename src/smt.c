@@ -14,11 +14,11 @@ const char* SMT_HISTORY_STATE_STR = "SMT_HISTORY_STATE";
 typedef struct smt_stateMachine_data {
     /* transition look up table by eventId and source stateId */
     smt_transition_ptr_const_t** transitionLookup;
-    smt_counter_t transitionLookupSize;
     smt_state_ptr_const_t entryState;
     smt_state_ptr_const_t activeState;
     smt_state_ptr_const_t historyState;
     smt_transition_ptr_const_t* entryTransitions;
+    smt_counter_t entryTransitionCount;
     smt_counter_t maxEventId;
 } smt_stateMachine_data_t;
 
@@ -51,10 +51,14 @@ typedef smt_stateMachine_data_t* const smt_stateMachine_data_const_ptr_t;
 
 static smt_machineStatus_t smtEnterStateMachine(
     smt_stateMachine_ptr_t machine, const smt_transition_ptr_const_t transition,
-    void* context);
+    boolean restoreHistory, void* context);
 
 static smt_machineStatus_t smtExitStateMachine(smt_stateMachine_ptr_t machine,
                                                void* context);
+
+static smt_machineStatus_t smtProcessTransition(
+	    const smt_stateMachine_ptr_t machine,
+	    const smt_transition_ptr_const_t transition, void* context);
 
 /* ------------------- local function prototypes --------------------- */
 
@@ -62,16 +66,17 @@ static smt_machineStatus_t smtEnterState(
     const smt_stateMachine_ptr_t machine,
     const smt_state_ptr_const_t targetState,
     const smt_transition_ptr_const_t transition,
+	boolean restoreHistory,
     /*@null@*/ void* context)
 {
     smt_stateMachine_data_const_ptr_t data = smtMachineGetInternalData(machine);
     smt_machineStatus_t retVal = SMT_MACHINE_OK;
 
     /*
- * 1. execute the entry action
- * 2. If the state linked to a sub state machine, start the sub state machine
- * 3. If entry action failed/errored at any level, break process immediately
- */
+     * 1. execute the entry action
+     * 2. If the state linked to a sub state machine, start the sub state machine
+     * 3. If entry action failed/error at any level, break process immediately
+     */
 
     /* execute entry action */
     if (smtStateHasEntryAction(targetState)) {
@@ -79,12 +84,12 @@ static smt_machineStatus_t smtEnterState(
         smt_actionReturnStatus_t v = func(context);
         if (SMT_ACTION_DONE != v) {
             /*
-       * entry action fail is considered to be fatal
-     * error cause state machine is placed at an
-     * unstable status since transition action is
-     * completed, but the target state cannot be
-     * entered
-     */
+             * entry action fail is considered to be fatal
+             * error cause state machine is placed at an
+             * unstable status since transition action is
+             * completed, but the target state cannot be
+             * entered
+             */
             retVal = SMT_MACHINE_ERROR_MACHINE_ERROR;
             return retVal;
         }
@@ -92,9 +97,19 @@ static smt_machineStatus_t smtEnterState(
 
     data->activeState = targetState;
 
-    if (smtIsSubStateMachine(targetState)) {
-        retVal = smtEnterStateMachine(smtStateGetSubStateMachine(targetState),
-                                      transition, context);
+    /* when transition is NULL, it means initialize the machine to entry state */
+    if (NULL != transition) {
+    	if (smtIsSubStateMachine(targetState)) {
+    		return smtEnterStateMachine(smtStateGetSubStateMachine(targetState),
+                                      transition, restoreHistory, context);
+    	} else if (targetState->id == SMT_ENTRY_STATE_ID) {
+    		return smtProcessTransition(machine, transition, context);
+    	}
+    }
+
+    if (restoreHistory && smtIsSubStateMachine(targetState)) {
+		return smtEnterStateMachine(smtStateGetSubStateMachine(targetState),
+                                  transition, restoreHistory, context);
     }
 
     return retVal;
@@ -108,10 +123,10 @@ static smt_machineStatus_t smtExitState(smt_stateMachine_ptr_t machine,
     smt_actionReturnStatus_t actionRetVal;
 
     /*
- * 1. execute the exit action
- * 2. If the state is asociated with a sub state machine, then exit the sub
- * state machine
- */
+     * 1. execute the exit action
+     * 2. If the state is asociated with a sub state machine, then exit the sub
+     * state machine
+     */
 
     /* execute exit action */
     if (smtStateHasExitAction(srcState)) {
@@ -119,12 +134,12 @@ static smt_machineStatus_t smtExitState(smt_stateMachine_ptr_t machine,
         actionRetVal = func(context);
         if (SMT_ACTION_DONE != actionRetVal) {
             /*
-    * exit action fail is considered to be fatal
-    * error cause state machine is placed at an
-    * unstable status since transition action is
-    * completed, but the target state cannot be
-    * entered
-    */
+             * exit action fail is considered to be fatal
+             * error cause state machine is placed at an
+             * unstable status since transition action is
+             * completed, but the target state cannot be
+             * entered
+             */
             retVal = SMT_MACHINE_ERROR_MACHINE_ERROR;
             return retVal;
         }
@@ -180,7 +195,7 @@ static smt_machineStatus_t smtProcessTransition(
     }
 
     if (srcState != tgtState) {
-        return smtEnterState(machine, tgtState, transition, context);
+        return smtEnterState(machine, tgtState, transition, (boolean)FALSE, context);
     }
 
     return SMT_MACHINE_OK;
@@ -188,18 +203,33 @@ static smt_machineStatus_t smtProcessTransition(
 
 static smt_machineStatus_t smtEnterStateMachine(
     smt_stateMachine_ptr_t const machine,
-    const smt_transition_ptr_const_t transition, void* context)
+    const smt_transition_ptr_const_t transition, boolean restoreHistory, void* context)
 {
     smt_state_ptr_const_t state = NULL;
     smt_stateMachine_data_const_ptr_t data = smtMachineGetInternalData(machine);
-    if (transition->restoreHistory) {
+    if (restoreHistory || transition->restoreHistory) {
         state = data->historyState;
+        restoreHistory = TRUE;
     }
 
     if (NULL == state) {
         state = data->entryState;
     }
-    return smtEnterState(machine, state, transition, context);
+    smt_transition_ptr_const_t localTransition = NULL;
+    if (NULL != transition) {
+		localTransition = data->transitionLookup[transition->event][state->id];
+		if (NULL == localTransition && state == data->entryState) {
+			/* try the entry transition list */
+			int i;
+			for (i = 0; i < data->entryTransitionCount; ++i) {
+				if (transition->event == data->entryTransitions[i]->event) {
+					localTransition = data->entryTransitions[i];
+					break;
+				}
+			}
+		}
+    }
+    return smtEnterState(machine, state, localTransition, restoreHistory, context);
 }
 
 /* leave smate machine */
@@ -212,7 +242,7 @@ static smt_machineStatus_t smtExitStateMachine(smt_stateMachine_ptr_t machine,
             smtExitState(machine, data->activeState, context);
         }
         data->historyState = data->activeState;
-        data->activeState = NULL;
+        data->activeState = data->entryState;
     }
     return SMT_MACHINE_OK;
 }
@@ -221,7 +251,6 @@ static void smtMachineFinalize(smt_stateMachine_ptr_t machine)
 {
     smt_stateMachine_data_const_ptr_t data = smtMachineGetInternalData(machine);
     data->activeState = &SMT_FINAL_STATE;
-    /* TODO: free buffers */
 }
 
 static smt_machineStatus_t smt_handleEvent(smt_stateMachine_ptr_t machine,
@@ -242,6 +271,10 @@ static smt_machineStatus_t smt_handleEvent(smt_stateMachine_ptr_t machine,
 
     /* prevent buffer overflow attack */
     if (event > data->maxEventId) {
+    	if (smtIsSubStateMachine(state)) {
+    		smt_stateMachine_ptr_t subMachine = smtStateGetSubStateMachine(state);
+    		return smt_handleEvent(subMachine, event, context);
+    	}
         return SMT_MACHINE_ERROR_UNKNOWN;
     }
 
@@ -260,7 +293,8 @@ static smt_machineStatus_t smt_handleEvent(smt_stateMachine_ptr_t machine,
  */
 static void smt_processStateList(const smt_stateMachine_t* machine,
                                  smt_counter_t* maxId,
-                                 smt_state_ptr_const_t* entryState)
+                                 smt_state_ptr_const_t* entryState,
+                                 void* context)
 {
     smt_stateMachine_t* subMachine;
     smt_state_ptr_const_t state;
@@ -275,7 +309,7 @@ static void smt_processStateList(const smt_stateMachine_t* machine,
             *maxId = MAX(*maxId, stateId);
             subMachine = smtStateGetSubStateMachine(state);
             if (NULL != subMachine) {
-                smtMachineInit(subMachine);
+                smtMachineInit(subMachine, context);
             }
         } else if (stateId == SMT_ENTRY_STATE_ID) {
             *entryState = state;
@@ -306,48 +340,54 @@ static void smt_processTransitionList(
 static smt_machineStatus_t smt_buildStateMachine(
     smt_stateMachine_t* machine, smt_counter_t maxStateId,
     smt_counter_t maxEventId, smt_state_ptr_const_t entryState,
-    smt_counter_t entryStateTransitionCount)
+    smt_counter_t entryStateTransitionCount, void* context)
 {
 
-    smt_transition_ptr_const_t** transitionLookup = smt_get_buffer((maxEventId + 1) * sizeof(int*));
-    int i;
-    for (i = 0; i < maxEventId + 1; i++) {
-        transitionLookup[i] = smt_get_buffer((maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
-    }
-    smt_transition_ptr_const_t* entryTransitions = smt_get_buffer(
-        entryStateTransitionCount * sizeof(smt_transition_ptr_const_t));
-    smt_transition_ptr_const_t transition;
-    smt_counter_t event_id, state_id;
-    int entryStateTransitionCursor = 0;
-    for (i = 0; i < machine->transitionCount; i++) {
-        transition = &machine->transitionList[i];
-        switch (transition->sourceState->id) {
-        case(SMT_ENTRY_STATE_ID)
-            :
-            entryTransitions[entryStateTransitionCursor++] = transition;
-            continue;
-        case(SMT_FINAL_STATE_ID)
-            :
-        case(SMT_HISTORY_STATE_ID)
-            :
-            return SMT_MACHINE_ERROR_FATAL;
-        default:
-            event_id = transition->event;
-            state_id = transition->sourceState->id;
-            transitionLookup[event_id][state_id] = transition;
-        }
+    smt_transition_ptr_const_t** transitionLookup = NULL;
+    smt_transition_ptr_const_t* entryTransitions = NULL;
+	int entryStateTransitionCursor = 0;
+    if (machine->transitionCount > 0) {
+		transitionLookup = smt_get_buffer((maxEventId + 1) * sizeof(int*));
+		int i;
+		for (i = 0; i < maxEventId + 1; i++) {
+			transitionLookup[i] = smt_get_buffer((maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
+			memset(*transitionLookup, 0, (maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
+		}
+		entryTransitions = smt_get_buffer(
+			entryStateTransitionCount * sizeof(smt_transition_ptr_const_t));
+		smt_transition_ptr_const_t transition;
+		smt_counter_t event_id, state_id;
+		for (i = 0; i < machine->transitionCount; i++) {
+			transition = &machine->transitionList[i];
+			switch (transition->sourceState->id) {
+			case(SMT_ENTRY_STATE_ID)
+				:
+				entryTransitions[entryStateTransitionCursor++] = transition;
+				continue;
+			case(SMT_FINAL_STATE_ID)
+				:
+			case(SMT_HISTORY_STATE_ID)
+				:
+				return SMT_MACHINE_ERROR_FATAL;
+			default:
+				event_id = transition->event;
+				state_id = transition->sourceState->id;
+				transitionLookup[event_id][state_id] = transition;
+			}
+		}
     }
     smt_stateMachine_data_t* data = smt_get_buffer(sizeof(smt_stateMachine_data_t));
     data->transitionLookup = transitionLookup;
-    data->transitionLookupSize = (0 == machine->transitionCount) ? 0 : (maxEventId + 1) * (maxStateId + 1);
     data->entryState = entryState;
     data->activeState = NULL;
     data->historyState = NULL;
     data->entryTransitions = entryTransitions;
+    data->entryTransitionCount = entryStateTransitionCursor;
     data->maxEventId = maxEventId;
     machine->internalData = data;
-    return SMT_MACHINE_OK;
+    return smtEnterState(machine, data->entryState, NULL, FALSE, context);;
 }
+
 
 /* ------------------- external const data ---------------------
  */
@@ -367,24 +407,29 @@ smt_state_t SMT_HISTORY_STATE = { SMT_HISTORY_STATE_ID,
 /* ------------------- external function implementations ---------------------
  */
 
-smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine)
+smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine, void* context)
 {
     smt_machineStatus_t retVal = SMT_MACHINE_OK;
     smt_counter_t maxStateId;
     smt_state_ptr_const_t entryState;
     smt_counter_t maxEventId;
     smt_counter_t entryStateTransitionCount;
-    smt_processStateList(machine, &maxStateId, &entryState);
+    smt_processStateList(machine, &maxStateId, &entryState, context);
     smt_processTransitionList(machine, &maxEventId, &entryStateTransitionCount);
     smt_buildStateMachine(machine, maxStateId, maxEventId, entryState,
-                          entryStateTransitionCount);
+                          entryStateTransitionCount, context);
     return retVal;
 }
 
 smt_machineStatus_t smtMachineRun(smt_stateMachine_ptr_t machine,
                                   smt_eventId_t event, void* context)
 {
-    smt_machineStatus_t retVal = SMT_MACHINE_OK;
+	if (SMT_SHUTDOWN_EVENT == event) {
+		smtMachineFinalize(machine);
+		return SMT_MACHINE_OK;
+	}
+
+	smt_machineStatus_t retVal = SMT_MACHINE_OK;
     smt_stateMachine_data_const_ptr_t data = smtMachineGetInternalData(machine);
 
     if (NULL != data->activeState && data->activeState->id == SMT_FINAL_STATE_ID) {
@@ -397,6 +442,39 @@ smt_machineStatus_t smtMachineRun(smt_stateMachine_ptr_t machine,
     }
 
     return retVal;
+}
+
+void smtMachineDestroy(smt_stateMachine_ptr_t machine, void* context) {
+    smt_stateMachine_t* subMachine;
+    smt_state_ptr_const_t state;
+    smt_stateId_t stateId;
+    int i;
+    for (i = 0; i < machine->stateCount; i++) {
+        state = machine->stateList[i];
+        subMachine = smtStateGetSubStateMachine(state);
+    		if (NULL != subMachine) {
+    			smtMachineDestroy(subMachine, context);
+    		}
+    }
+    smt_stateMachine_data_const_ptr_t data = smtMachineGetInternalData(machine);
+    if (NULL == data) {
+    	return;
+    }
+    if (NULL != data->transitionLookup) {
+    	int i;
+    	for (i = 0; i < data->maxEventId + 1; ++i) {
+    		smt_free_buffer(data->transitionLookup[i]);
+    	}
+    	smt_free_buffer(data->transitionLookup);
+    }
+    if (NULL != data->entryTransitions) {
+    	smt_free_buffer(data->entryTransitions);
+    }
+    smt_free_buffer(data);
+    machine->internalData = NULL;
+    if (NULL != machine->destructor) {
+      machine->destructor(context);
+    }
 }
 
 boolean smtIsMachineFinalized(smt_stateMachine_ptr_t machine)

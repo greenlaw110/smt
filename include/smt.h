@@ -36,9 +36,6 @@ typedef smt_counter_t smt_eventId_t;
 /* identify state in a single statemachine hierarchy */
 typedef smt_counter_t smt_stateId_t;
 
-/* the maximum hierarchy of compound state */
-#define SMT_MAX_HIERARCHY ((smt_counter_t)0XF)
-
 /* reserved: final state ID */
 #define SMT_FINAL_STATE_ID ((smt_stateId_t)0XFF)
 
@@ -49,14 +46,17 @@ typedef smt_counter_t smt_stateId_t;
 #define SMT_ENTRY_STATE_ID ((smt_stateId_t)0XFD)
 
 /*
- * reserved: complete event ID
- * completionEvent triggers when transition within a composite
- * state reached the final state
+ * reserved: shutdown ID
+ * when statemachine encountered shutdown event
+ * it transit to final state immediately
  */
-#define SMT_COMPLETION_EVENT ((smt_eventId_t)0XFF)
+#define SMT_SHUTDOWN_EVENT ((smt_eventId_t)0XFF)
 
 /* the guard function pointer */
 typedef boolean (*smt_guardFuncPtr_t)(/*@null@*/ /*@unused@*/ void* context);
+
+/* the destructor function pointer to be called after destroy a statemachine */
+typedef void (*smt_destructorFuncPtr_t)(/*@null@*/ /*@unused@*/ void* context);
 
 /* action return status */
 typedef enum {
@@ -153,6 +153,7 @@ typedef struct smt_stateMachine {
   const smt_counter_t stateCount;
   smt_transition_ptr_const_t transitionList;
   const smt_counter_t transitionCount;
+  const smt_destructorFuncPtr_t destructor;
   /* placeholder for internal data */
   void* internalData;
 } smt_stateMachine_t;
@@ -170,12 +171,16 @@ typedef enum {
 } smt_machineStatus_t;
 
 /* statemachine initializer */
-smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine);
+smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine, void* context);
 
 /* statemachine entry */
 smt_machineStatus_t smtMachineRun(smt_stateMachine_ptr_t machine,
                                   smt_eventId_t event, void* context);
 
+/* statemachine terminator */
+void smtMachineDestroy(smt_stateMachine_ptr_t machine, void* context);
+
+/* check if a statemachine reached a final state */
 boolean smtIsMachineFinalized(smt_stateMachine_ptr_t machine);
 
 #endif

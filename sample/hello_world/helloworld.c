@@ -42,7 +42,7 @@ smt_stateMachine_t helloworldStateMachine = {
 int main()
 {
     int input = 0;
-    smt_machineStatus_t status = smtMachineInit(&helloworldStateMachine);
+    smt_machineStatus_t status = smtMachineInit(&helloworldStateMachine, NULL);
     if (SMT_MACHINE_OK != status) {
         printf("init machine failed.\n");
         return 1;
@@ -54,11 +54,12 @@ int main()
         getchar();
         smt_machineStatus_t retVal = smtMachineRun(&helloworldStateMachine, input, NULL);
         if (smtIsMachineFinalized(&helloworldStateMachine)) {
+            smtMachineDestroy(&helloworldStateMachine, NULL);
             printf("world shutdown\n");
             break;
         }
         if (SMT_MACHINE_ERROR_UNKNOWN == retVal) {
-            printf("unknown event\n");
+            printf("unknown command\n");
         }
     }
 

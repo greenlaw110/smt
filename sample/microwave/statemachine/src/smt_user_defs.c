@@ -8,5 +8,5 @@ void* smt_get_buffer(size_t size) {
 }
 
 void smt_free_buffer(void * buf) {
-    free(buf);
+	free(buf);
 }
