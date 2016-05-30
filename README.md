@@ -32,4 +32,5 @@ This will install the libsmt.so into your `/usr/lib` dir
 ## Sample Apps
 
 * [Helloworld](sample/hello_world/README.md)
+* [Microwave](sample/microwave/README.md)
 
