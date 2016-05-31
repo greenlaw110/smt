@@ -19,9 +19,8 @@ struct smt_stateMachine;
      parent SM
  * Limits
  * - Unable to check malformed statemachine such as un-ended transition route.
- * - Maximum compound state hierarchy is 16.
- * - Maximum number event types in one statemachine (not include sub machines)
- is 255.
+ * - Maximum number event types in one statemachine (including sub machines)
+ is 255 including one predefined event: SMT_SHUTDOWN_EVENT
  * - Maximum state in one statemachine (not include sub machines) is 255
  including three pseudo states
  * - Transition cannot across state hierarchy.

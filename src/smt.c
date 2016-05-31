@@ -348,10 +348,11 @@ static smt_machineStatus_t smt_buildStateMachine(
 	int entryStateTransitionCursor = 0;
     if (machine->transitionCount > 0) {
 		transitionLookup = smt_get_buffer((maxEventId + 1) * sizeof(int*));
+    /* memset(*transitionLookup, 0, (maxEventId + 1) * sizeof(int*)); */
 		int i;
 		for (i = 0; i < maxEventId + 1; i++) {
 			transitionLookup[i] = smt_get_buffer((maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
-			memset(*transitionLookup, 0, (maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
+			memset((transitionLookup[i]), 0, (maxStateId + 1) * sizeof(smt_transition_ptr_const_t));
 		}
 		entryTransitions = smt_get_buffer(
 			entryStateTransitionCount * sizeof(smt_transition_ptr_const_t));

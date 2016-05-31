@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(smt)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 #Bring the headers, such as Student.h into the project
 include_directories(include)
 

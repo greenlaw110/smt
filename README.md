@@ -1,6 +1,6 @@
-# Simple State Machine
+# State Machine Tool
 
-SMT is a simple implementation of HSM (Hierachical State Machine) in c language.
+SMT is a implementation of HSM (Hierachical State Machine) in c language.
 
 ## Features
 
@@ -11,7 +11,8 @@ SMT is a simple implementation of HSM (Hierachical State Machine) in c language.
 * App defined Guard/Action function on transitions
 * statemachine destroy hook
 * App defined context be passed through to all Entry/Exit/Guard/Action/Destroy hooks
-* Easy to define states and transitions
+* App defined method to allocate and free memory
+* Easy to define events, states and transitions
 
 ## Build SMT
 

@@ -69,7 +69,7 @@ static smt_transition_t transitionList[] = {
         .event = CLOSE_DOOR,
         .sourceState = &doorOpen,
         .targetState = &doorClosed,
-		.restoreHistory = TRUE
+        .restoreHistory = TRUE
     }
 };
 
