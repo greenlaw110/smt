@@ -58,7 +58,7 @@ int getEvent() {
 }
 
 int main() {
-    smt_machineStatus_t status = smtMachineInit(&MicrowaveStateMachine, &context);
+    smt_machineStatus_t status = smtMachineInit(&MicrowaveStateMachine, SMT_OPTIMIZE_AUTO, &context);
     if (SMT_MACHINE_OK != status) {
         printf("init machine failed.\n");
         return 1;

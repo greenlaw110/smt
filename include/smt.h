@@ -51,6 +51,16 @@ typedef smt_counter_t smt_stateId_t;
  */
 #define SMT_SHUTDOWN_EVENT ((smt_eventId_t)0XFF)
 
+/*
+ * Options hints for choosing transition lookup 
+ * table data structure
+ */
+typedef enum {
+  SMT_OPTIMIZE_TIME,
+  SMT_OPTIMIZE_SPACE,
+  SMT_OPTIMIZE_AUTO
+} smt_lookup_table_optimize_hint_t;
+
 /* the guard function pointer */
 typedef boolean (*smt_guardFuncPtr_t)(/*@null@*/ /*@unused@*/ void* context);
 
@@ -170,7 +180,7 @@ typedef enum {
 } smt_machineStatus_t;
 
 /* statemachine initializer */
-smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine, void* context);
+smt_machineStatus_t smtMachineInit(smt_stateMachine_ptr_t machine, smt_lookup_table_optimize_hint_t optimizeHint,  void* context);
 
 /* statemachine entry */
 smt_machineStatus_t smtMachineRun(smt_stateMachine_ptr_t machine,
