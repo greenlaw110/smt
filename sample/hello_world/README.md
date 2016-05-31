@@ -139,7 +139,7 @@ void help() {
 
 Implement the main method:
 
-```
+```c
 int main()
 {
     char input[10];
