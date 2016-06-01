@@ -5,7 +5,6 @@ SMT is a implementation of HSM (Hierachical State Machine) in c language.
 ## Features
 
 * Unlimited statemachine hierarchies
-* Region
 * Deep history
 * App defined Entry/Exit function on states
 * App defined Guard/Action function on transitions
